@@ -1,0 +1,101 @@
+name: Update MCP Sources
+
+on:
+  schedule:
+    # Run monthly at 2 AM UTC
+    - cron: '0 2 1 * *'
+  workflow_dispatch:  # Allow manual trigger
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/**'  # Re-run if scripts change
+
+jobs:
+  update-registry:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write  # Need write permission to commit
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: false  # No go.sum file (no external dependencies)
+      
+      - name: Create work directory
+        run: mkdir -p .work
+      
+      - name: Fetch awesome-mcp-servers README
+        run: |
+          echo "Fetching latest MCP servers list..."
+          curl -o .work/awesome-mcp-servers.md \
+            https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md
+          echo "README fetched successfully ($(wc -l < .work/awesome-mcp-servers.md) lines)"
+      
+      - name: Run registry parser
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Parsing and enriching registry with GitHub metadata..."
+          go run scripts/parse-registry.go \
+            .work/awesome-mcp-servers.md \
+            .work/results.json \
+            otui/plugins.json
+          
+          # Show stats (requires jq)
+          sudo apt-get update -qq && sudo apt-get install -y -qq jq
+          PLUGIN_COUNT=$(jq length .work/results.json)
+          echo "Processed $PLUGIN_COUNT plugins"
+          
+          # Show install type distribution
+          echo "Install type distribution:"
+          jq -r '.[] | .install_type' .work/results.json | sort | uniq -c | sort -rn
+      
+      - name: Move plugins to repo root
+        run: |
+          mv .work/results.json scripts/results.json
+          echo "Results moved to repo"
+      
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add plugins.json
+          
+          # Check if results.json is new or has changes
+          if git diff --cached --quiet scripts/results.json; then
+            echo "No changes to results.json, skipping commit"
+          else
+            PLUGIN_COUNT=$(jq length scripts/results.json)
+            TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M UTC")
+            git commit -m "Update source: $PLUGIN_COUNT plugins ($TIMESTAMP)"
+            git push
+            echo "Source results committed and pushed"
+          fi
+      
+      - name: Cleanup work directory
+        if: always()
+        run: rm -rf .work
+      
+      - name: Summary
+        if: always()
+        run: |
+          if [ -f scripts/results.json ]; then
+            PLUGIN_COUNT=$(jq length scripts/results.json)
+            echo "✅ Results contains $PLUGIN_COUNT plugins"
+            
+            echo ""
+            echo "Top 5 plugins by stars:"
+            jq -r '.[] | "\(.stars // 0)\t\(.name)"' scripts/results.json | sort -rn | head -5
+          else
+            echo "❌ results.json not found"
+          fi

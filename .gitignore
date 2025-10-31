@@ -1,0 +1,11 @@
+# Ignore work directory (used by scripts/workflows)
+.work/
+
+# Go build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work

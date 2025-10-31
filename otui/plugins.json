@@ -1,0 +1,16 @@
+[
+  {
+    "name": "ihor-sokoliuk/mcp-searxng",
+    "repository": "https://github.com/ihor-sokoliuk/mcp-searxng",
+    "description": "MCP server for SearXNG web search integration",
+    "category": "utility",
+    "verified": true
+  },
+  {
+    "name": "OvertliDS/mcp-searxng-enhanced",
+    "repository": "https://github.com/OvertliDS/mcp-searxng-enhanced",
+    "description": "Enhanced MCP server for SearXNG with additional features",
+    "category": "utility",
+    "verified": false
+  }
+]
