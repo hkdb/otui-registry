@@ -5,7 +5,6 @@
 ## 📊 Statistics
 
 ![Plugin Count](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/hkdb/otui-registry/main/plugins.json&query=$.length&label=plugins&color=blue)
-![Last Update](https://img.shields.io/github/last-commit/hkdb/otui-registry/commits/main/plugins.json?label=last%20update)
 
 ## 📋 What is this?
 
