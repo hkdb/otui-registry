@@ -34,7 +34,7 @@
     "package": "memmachine",
     "transport": "streamable-http",
     "server_url": "http://localhost:8080/mcp/",
-    "environment": "",
+    "environment": "session-id;;'{{OTUI_SESSION_ID}}' group-id;;'{{OTUI_USER}}' user-id;;'{{OTUI_USER}}'",
     "args": "",
     "verified": true,
     "official": true
